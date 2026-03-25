@@ -1,0 +1,5 @@
+{
+  "name": "Medical Billing Auditor",
+  "description": "Analyze medical invoices for administrative, medical, and financial audits using AI.",
+  "requestFramePermissions": []
+}

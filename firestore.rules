@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users/{userId}/invoices
+    // Document ID: auto-generated
+    // Fields:
+    //   - uid: string (required) - The user ID of the owner.
+    //   - createdAt: string (required) - Creation timestamp.
+    //   - language: string (required, 'en' or 'ar') - The language of the report.
+    //   - report: map (required) - The actual JSON report from Gemini.
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    function isValidInvoiceReport() {
+      return hasRequiredFields(['uid', 'createdAt', 'language', 'report']) &&
+             request.resource.data.uid is string &&
+             request.resource.data.uid.size() > 0 &&
+             request.resource.data.uid.size() < 100 &&
+             request.resource.data.createdAt is string &&
+             request.resource.data.language in ['en', 'ar'] &&
+             request.resource.data.report is map;
+    }
+
+    match /users/{userId}/invoices/{invoiceId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidInvoiceReport() && uidUnchanged();
+      allow update: if isOwner(userId) && isValidInvoiceReport() && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(userId);
+    }
+  }
+}

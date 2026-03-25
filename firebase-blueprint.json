@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "InvoiceReport": {
+      "title": "Invoice Report",
+      "description": "A saved medical invoice audit report.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user ID of the owner." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
+        "language": { "type": "string", "enum": ["en", "ar"], "description": "The language of the report." },
+        "report": {
+          "type": "object",
+          "description": "The actual JSON report from Gemini.",
+          "properties": {
+            "report_metadata": { "type": "object" },
+            "administrative_audit": { "type": "object" },
+            "medical_audit": { "type": "object" },
+            "financial_audit": { "type": "object" },
+            "overall_summary": { "type": "object" }
+          }
+        }
+      },
+      "required": ["uid", "createdAt", "language", "report"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/InvoiceReport" },
+      "description": "Invoices saved by a specific user."
+    }
+  }
+}
