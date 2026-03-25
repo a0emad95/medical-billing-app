@@ -202,7 +202,7 @@ export default function App() {
         <Card className="w-full max-w-md shadow-lg border-0">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto flex items-center justify-center mb-6">
-              <img src="/logo.png" alt="صندوق الخدمات الطبية" className="h-20 w-auto object-contain" referrerPolicy="no-referrer" />
+              <img src="https://raw.githubusercontent.com/a0emad95/medical-billing-app/main/public/LOGO.png" alt="صندوق الخدمات الطبية" className="h-20 w-auto object-contain" referrerPolicy="no-referrer" />
             </div>
             <CardTitle className="text-2xl">{t.loginTitle}</CardTitle>
             <CardDescription className="text-base">{t.loginDesc}</CardDescription>
@@ -243,7 +243,7 @@ export default function App() {
       <nav className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="صندوق الخدمات الطبية" className="h-10 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://raw.githubusercontent.com/a0emad95/medical-billing-app/main/public/LOGO.png" alt="صندوق الخدمات الطبية" className="h-10 w-auto object-contain" referrerPolicy="no-referrer" />
             <span className="font-bold text-lg hidden sm:block">{t.appTitle}</span>
           </div>
           <div className="flex items-center gap-2">
