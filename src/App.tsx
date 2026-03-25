@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Globe, Plus } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Globe, Plus, ArrowRight, ArrowLeft, Moon, Sun } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { analyzeInvoice, AuditReport } from './services/geminiService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -57,14 +58,24 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   
-  const [lang, setLang] = useState<'en' | 'ar'>('en');
+  const [lang, setLang] = useState<'en' | 'ar'>('ar');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const t = translations[lang];
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<AuditReport | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [history, setHistory] = useState<any[]>([]);
@@ -109,35 +120,39 @@ export default function App() {
     await signOut(auth);
     setIsGuest(false);
     setReport(null);
-    setImagePreview(null);
+    setImagePreviews([]);
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
     setReport(null);
     setError(null);
     setIsAnalyzing(true);
+    setImagePreviews([]);
 
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const imageDataArray: {base64Image: string, mimeType: string}[] = [];
+      const previews: string[] = [];
 
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = (reader.result as string).split(',')[1];
-          resolve(base64String);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      for (const file of files) {
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            previews.push(reader.result as string);
+            const base64String = (reader.result as string).split(',')[1];
+            resolve(base64String);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        imageDataArray.push({ base64Image: base64Data, mimeType: file.type });
+      }
 
-      const result = await analyzeInvoice(base64Data, file.type, lang);
+      setImagePreviews(previews);
+
+      const result = await analyzeInvoice(imageDataArray, lang);
       setReport(result);
 
       // Save to history if logged in
@@ -198,55 +213,176 @@ export default function App() {
 
   if (!user && !isGuest) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-        <Card className="w-full max-w-md shadow-lg border-0">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto flex items-center justify-center mb-6">
-              <img src="https://raw.githubusercontent.com/a0emad95/medical-billing-app/main/public/LOGO.png" alt="صندوق الخدمات الطبية" className="h-20 w-auto object-contain" referrerPolicy="no-referrer" />
-            </div>
-            <CardTitle className="text-2xl">{t.loginTitle}</CardTitle>
-            <CardDescription className="text-base">{t.loginDesc}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-4">
-            <Button className="w-full h-12 text-lg" onClick={handleLogin}>
-              <LogIn className="w-5 h-5 mr-2" />
-              {t.signInGoogle}
-            </Button>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 p-4 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="absolute top-4 right-4 flex gap-2 z-50" style={{ [lang === 'ar' ? 'left' : 'right']: '1rem', right: 'auto' }}>
+          <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="bg-white/50 backdrop-blur-sm dark:bg-slate-800/50 dark:text-white dark:border-slate-700">
+            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+          </Button>
+          <Button variant="outline" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')} className="bg-white/50 backdrop-blur-sm dark:bg-slate-800/50 dark:text-white dark:border-slate-700">
+            <Globe className="w-4 h-4 mr-2" />
+            {lang === 'en' ? 'العربية' : 'English'}
+          </Button>
+        </div>
+        <AnimatePresence mode="wait">
+          {showWelcome ? (
+            <motion.div
+              key="welcome"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: lang === 'ar' ? 50 : -50 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center text-center max-w-2xl"
+            >
+              <div className="flex items-center justify-center gap-6 md:gap-12 mb-10">
+                <motion.img
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  src="/LOGO1.png"
+                  alt="Logo 1"
+                  className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://placehold.co/400x400/eff6ff/2563eb?text=Medical+App";
+                  }}
+                />
+                <div className="h-20 w-px bg-slate-300 dark:bg-slate-700"></div>
+                <motion.img
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  src="/logo2.png"
+                  alt="Logo 2"
+                  className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://placehold.co/400x400/f8fafc/334155?text=New+Logo";
+                  }}
+                />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">OR</span>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full h-12 text-lg" onClick={() => setIsGuest(true)}>
-              <User className="w-5 h-5 mr-2" />
-              {t.continueGuest}
-            </Button>
-            
-            <div className="pt-4 flex justify-center">
-              <Button variant="ghost" size="sm" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}>
-                <Globe className="w-4 h-4 mr-2" />
-                {lang === 'en' ? 'العربية' : 'English'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4"
+              >
+                {t.appTitle}
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="text-lg text-slate-600 dark:text-slate-300 mb-12 max-w-lg"
+              >
+                {t.appDesc}
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9 }}
+                className="flex flex-col items-center gap-4"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowWelcome(false)}
+                  className="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.5)] hover:shadow-[0_0_50px_rgba(37,99,235,0.8)] transition-all"
+                >
+                  {lang === 'ar' ? <ArrowLeft className="w-10 h-10" /> : <ArrowRight className="w-10 h-10" />}
+                </motion.button>
+                <span className="text-slate-500 dark:text-slate-400 font-medium tracking-wide uppercase text-sm">
+                  {lang === 'ar' ? 'الدخول للتطبيق' : 'Enter Application'}
+                </span>
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="login"
+              initial={{ opacity: 0, x: lang === 'ar' ? -50 : 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.5 }}
+              className="w-full max-w-md"
+            >
+              <Card className="w-full shadow-2xl border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 left-4 z-10"
+                  onClick={() => setShowWelcome(true)}
+                  style={{ [lang === 'ar' ? 'right' : 'left']: '1rem', left: 'auto' }}
+                >
+                  {lang === 'ar' ? <ArrowRight className="w-5 h-5 text-slate-500" /> : <ArrowLeft className="w-5 h-5 text-slate-500" />}
+                </Button>
+                <CardHeader className="text-center pb-2 pt-10">
+                  <div className="mx-auto flex items-center justify-center mb-6">
+                    <img 
+                      src="/LOGO1.png" 
+                      alt="صندوق الخدمات الطبية" 
+                      className="h-20 w-auto object-contain dark:brightness-110" 
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "https://placehold.co/400x400/eff6ff/2563eb?text=Medical+App";
+                      }}
+                    />
+                  </div>
+                  <CardTitle className="text-2xl">{t.loginTitle}</CardTitle>
+                  <CardDescription className="text-base">{t.loginDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <Button className="w-full h-12 text-lg" onClick={handleLogin}>
+                    <LogIn className="w-5 h-5 mr-2" />
+                    {t.signInGoogle}
+                  </Button>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t dark:border-slate-700" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white dark:bg-slate-900 px-2 text-slate-500 dark:text-slate-400">OR</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full h-12 text-lg dark:border-slate-700 dark:text-white" onClick={() => setIsGuest(true)}>
+                    <User className="w-5 h-5 mr-2" />
+                    {t.continueGuest}
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Top Navigation */}
-      <nav className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
+      <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="https://raw.githubusercontent.com/a0emad95/medical-billing-app/main/public/LOGO.png" alt="صندوق الخدمات الطبية" className="h-10 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img 
+              src="/LOGO1.png" 
+              alt="صندوق الخدمات الطبية" 
+              className="h-10 w-auto object-contain dark:brightness-110" 
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "https://placehold.co/400x400/eff6ff/2563eb?text=Medical+App";
+              }}
+            />
             <span className="font-bold text-lg hidden sm:block">{t.appTitle}</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}>
               <Globe className="w-4 h-4 mr-2" />
               {lang === 'en' ? 'العربية' : 'English'}
@@ -276,7 +412,7 @@ export default function App() {
                 <History className="w-5 h-5 text-slate-500" />
                 {t.history}
               </h2>
-              <Button variant="ghost" size="icon" onClick={() => { setReport(null); setImagePreview(null); }}>
+              <Button variant="ghost" size="icon" onClick={() => { setReport(null); setImagePreviews([]); }}>
                 <Plus className="w-5 h-5" />
               </Button>
             </div>
@@ -288,10 +424,10 @@ export default function App() {
                   {history.map((item) => (
                     <Card 
                       key={item.id} 
-                      className="cursor-pointer hover:border-blue-300 transition-colors"
+                      className="cursor-pointer hover:border-blue-300 dark:bg-slate-900 dark:border-slate-800 dark:hover:border-blue-700 transition-colors"
                       onClick={() => {
                         setReport(item.report);
-                        setImagePreview(null); // We don't save images to save space, so clear preview
+                        setImagePreviews([]); // We don't save images to save space, so clear preview
                       }}
                     >
                       <CardContent className="p-3">
@@ -334,18 +470,19 @@ export default function App() {
 
           {/* Upload Area */}
           {!report && (
-            <Card className="border-dashed border-2 bg-white/50 hover:bg-white/80 transition-colors">
+            <Card className="border-dashed border-2 bg-white/50 hover:bg-white/80 dark:bg-slate-900/50 dark:hover:bg-slate-900/80 dark:border-slate-700 transition-colors">
               <CardContent className="p-8 md:p-12 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="p-4 bg-blue-50 rounded-full text-blue-600">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
                   <Upload className="w-8 h-8" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg">{t.uploadTitle}</h3>
-                  <p className="text-sm text-slate-500">{t.uploadDesc}</p>
+                  <h3 className="font-semibold text-lg dark:text-slate-200">{t.uploadTitle}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{t.uploadDesc}</p>
                 </div>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
                   ref={fileInputRef}
                   onChange={handleFileChange}
@@ -379,7 +516,7 @@ export default function App() {
               
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">{t.invoiceDetails}</h2>
-                <Button variant="outline" onClick={() => { setReport(null); setImagePreview(null); }}>
+                <Button variant="outline" onClick={() => { setReport(null); setImagePreviews([]); }}>
                   <Plus className="w-4 h-4 mr-2" />
                   {t.newAudit}
                 </Button>
@@ -388,41 +525,43 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Left Column: Image Preview & Metadata */}
                 <div className="space-y-6 md:col-span-1">
-                  <Card>
+                  <Card className="dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-slate-500" />
+                      <CardTitle className="text-lg flex items-center gap-2 dark:text-slate-200">
+                        <FileText className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                         {t.invoiceDetails}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {imagePreview && (
-                        <div className="rounded-md overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
-                          <img src={imagePreview} alt="Invoice Preview" className="max-h-48 object-contain" />
+                      {imagePreviews.length > 0 && (
+                        <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center gap-4 p-4 max-h-64 overflow-y-auto">
+                          {imagePreviews.map((preview, idx) => (
+                            <img key={idx} src={preview} alt={`Invoice Preview ${idx + 1}`} className="max-h-48 object-contain" />
+                          ))}
                         </div>
                       )}
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between py-1 border-b border-slate-100">
-                          <span className="text-slate-500">{t.patient}</span>
-                          <span className="font-medium text-right">{report.report_metadata.patient_name || 'N/A'}</span>
+                        <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                          <span className="text-slate-500 dark:text-slate-400">{t.patient}</span>
+                          <span className="font-medium text-right dark:text-slate-200">{report.report_metadata.patient_name || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between py-1 border-b border-slate-100">
-                          <span className="text-slate-500">{t.hospital}</span>
-                          <span className="font-medium text-right">{report.report_metadata.hospital_name || 'N/A'}</span>
+                        <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                          <span className="text-slate-500 dark:text-slate-400">{t.hospital}</span>
+                          <span className="font-medium text-right dark:text-slate-200">{report.report_metadata.hospital_name || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between py-1 border-b border-slate-100">
-                          <span className="text-slate-500">{t.admission}</span>
-                          <span className="font-medium text-right">{report.report_metadata.admission_date || 'N/A'}</span>
+                        <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                          <span className="text-slate-500 dark:text-slate-400">{t.admission}</span>
+                          <span className="font-medium text-right dark:text-slate-200">{report.report_metadata.admission_date || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between py-1">
-                          <span className="text-slate-500">{t.discharge}</span>
-                          <span className="font-medium text-right">{report.report_metadata.discharge_date || 'N/A'}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{t.discharge}</span>
+                          <span className="font-medium text-right dark:text-slate-200">{report.report_metadata.discharge_date || 'N/A'}</span>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-slate-900 text-slate-50 border-slate-800">
+                  <Card className="bg-slate-900 text-slate-50 border-slate-800 dark:bg-slate-950">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg">{t.overallDecision}</CardTitle>
                     </CardHeader>
@@ -446,27 +585,27 @@ export default function App() {
                 <div className="space-y-6 md:col-span-2">
                   
                   {/* Administrative Audit */}
-                  <Card>
+                  <Card className="dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                       <div className="flex items-center gap-2">
-                        <FileWarning className="w-5 h-5 text-indigo-500" />
-                        <CardTitle className="text-lg">{t.adminAudit}</CardTitle>
+                        <FileWarning className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                        <CardTitle className="text-lg dark:text-slate-200">{t.adminAudit}</CardTitle>
                       </div>
                       <StatusBadge status={report.administrative_audit.status} />
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 text-sm">
-                          <span className="text-slate-500">{t.missingSignatures}:</span>
+                          <span className="text-slate-500 dark:text-slate-400">{t.missingSignatures}:</span>
                           {report.administrative_audit.missing_signatures ? (
                             <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">{t.yes}</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-green-600 border-green-200 bg-green-50">{t.no}</Badge>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">{t.no}</Badge>
                           )}
                         </div>
                         
                         {report.administrative_audit.errors.length > 0 && (
-                          <div className="bg-red-50 text-red-900 p-3 rounded-md text-sm">
+                          <div className="bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-400 p-3 rounded-md text-sm border dark:border-red-900/50">
                             <span className="font-semibold block mb-1">{t.adminErrors}</span>
                             <ul className="list-disc pl-5 space-y-2">
                               {report.administrative_audit.errors.map((err: any, i: number) => {
@@ -476,7 +615,7 @@ export default function App() {
                                 return (
                                   <li key={i}>
                                     <div>{msg}</div>
-                                    {bbox && imagePreview && <CroppedImage src={imagePreview} bbox={bbox} />}
+                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={bbox} />}
                                   </li>
                                 );
                               })}
@@ -488,42 +627,42 @@ export default function App() {
                   </Card>
 
                   {/* Medical Logic Audit */}
-                  <Card>
+                  <Card className="dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                       <div className="flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-blue-500" />
-                        <CardTitle className="text-lg">{t.medicalAudit}</CardTitle>
+                        <Activity className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                        <CardTitle className="text-lg dark:text-slate-200">{t.medicalAudit}</CardTitle>
                       </div>
                       <StatusBadge status={report.medical_audit.status} />
                     </CardHeader>
                     <CardContent>
                       {report.medical_audit.unjustified_medical_items.length > 0 ? (
                         <div className="space-y-3">
-                          <span className="text-sm font-semibold text-slate-700">{t.unjustifiedItems}</span>
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.unjustifiedItems}</span>
                           <ScrollArea className="h-[150px] pr-4">
                             <div className="space-y-3">
                               {report.medical_audit.unjustified_medical_items.map((item: any, i: number) => (
-                                <div key={i} className="bg-slate-50 p-3 rounded-md border border-slate-100">
-                                  <div className="font-medium text-sm text-slate-900">{item.item_name}</div>
-                                  <div className="text-sm text-slate-500 mt-1">{item.reason}</div>
-                                  {item.bounding_box && imagePreview && <CroppedImage src={imagePreview} bbox={item.bounding_box} />}
+                                <div key={i} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-md border border-slate-100 dark:border-slate-700">
+                                  <div className="font-medium text-sm text-slate-900 dark:text-slate-200">{item.item_name}</div>
+                                  <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{item.reason}</div>
+                                  {item.bounding_box && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={item.bounding_box} />}
                                 </div>
                               ))}
                             </div>
                           </ScrollArea>
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500 italic">{t.noUnjustified}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 italic">{t.noUnjustified}</p>
                       )}
                     </CardContent>
                   </Card>
 
                   {/* Financial Fraud Audit */}
-                  <Card>
+                  <Card className="dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-emerald-500" />
-                        <CardTitle className="text-lg">{t.financialAudit}</CardTitle>
+                        <DollarSign className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                        <CardTitle className="text-lg dark:text-slate-200">{t.financialAudit}</CardTitle>
                       </div>
                       <StatusBadge status={report.financial_audit.status} />
                     </CardHeader>
@@ -531,20 +670,20 @@ export default function App() {
                       
                       {report.financial_audit.unbundling_detected.length > 0 && (
                         <div className="space-y-2">
-                          <span className="text-sm font-semibold text-slate-700 flex items-center gap-1">
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
                             <AlertTriangle className="w-4 h-4 text-amber-500" />
                             {t.unbundlingDetected}
                           </span>
                           {report.financial_audit.unbundling_detected.map((item: any, i: number) => (
-                            <div key={i} className="bg-amber-50 p-3 rounded-md border border-amber-100 text-sm">
-                              <div className="font-medium text-amber-900 mb-1">{t.separatedItems}</div>
+                            <div key={i} className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md border border-amber-100 dark:border-amber-800/50 text-sm">
+                              <div className="font-medium text-amber-900 dark:text-amber-400 mb-1">{t.separatedItems}</div>
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {item.separated_items.map((sep: string, j: number) => (
-                                  <Badge key={j} variant="outline" className="bg-white text-amber-700 border-amber-200">{sep}</Badge>
+                                  <Badge key={j} variant="outline" className="bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800">{sep}</Badge>
                                 ))}
                               </div>
-                              <div className="text-amber-800">{item.explanation}</div>
-                              {item.bounding_box && imagePreview && <CroppedImage src={imagePreview} bbox={item.bounding_box} />}
+                              <div className="text-amber-800 dark:text-amber-500">{item.explanation}</div>
+                              {item.bounding_box && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={item.bounding_box} />}
                             </div>
                           ))}
                         </div>
@@ -553,8 +692,8 @@ export default function App() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {report.financial_audit.vague_items.length > 0 && (
                           <div className="space-y-2">
-                            <span className="text-sm font-semibold text-slate-700">{t.vagueItems}</span>
-                            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-2">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.vagueItems}</span>
+                            <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-2">
                               {report.financial_audit.vague_items.map((item: any, i: number) => {
                                 const isObj = typeof item === 'object' && item !== null;
                                 const name = isObj ? item.item : item;
@@ -562,7 +701,7 @@ export default function App() {
                                 return (
                                   <li key={i}>
                                     <div>{name}</div>
-                                    {bbox && imagePreview && <CroppedImage src={imagePreview} bbox={bbox} />}
+                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={bbox} />}
                                   </li>
                                 );
                               })}
@@ -572,8 +711,8 @@ export default function App() {
 
                         {report.financial_audit.suspicious_pricing.length > 0 && (
                           <div className="space-y-2">
-                            <span className="text-sm font-semibold text-slate-700">{t.suspiciousPricing}</span>
-                            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-2">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.suspiciousPricing}</span>
+                            <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-2">
                               {report.financial_audit.suspicious_pricing.map((item: any, i: number) => {
                                 const isObj = typeof item === 'object' && item !== null;
                                 const name = isObj ? item.item : item;
@@ -581,7 +720,7 @@ export default function App() {
                                 return (
                                   <li key={i}>
                                     <div>{name}</div>
-                                    {bbox && imagePreview && <CroppedImage src={imagePreview} bbox={bbox} />}
+                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={bbox} />}
                                   </li>
                                 );
                               })}

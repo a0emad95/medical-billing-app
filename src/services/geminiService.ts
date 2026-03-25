@@ -58,22 +58,24 @@ export interface AuditReport {
   };
 }
 
-export async function analyzeInvoice(base64Image: string, mimeType: string, lang: 'en' | 'ar' = 'en'): Promise<AuditReport> {
+export async function analyzeInvoice(images: {base64Image: string, mimeType: string}[], lang: 'en' | 'ar' = 'en'): Promise<AuditReport> {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const imageParts = images.map(img => ({
+      inlineData: {
+        data: img.base64Image,
+        mimeType: img.mimeType,
+      }
+    }));
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: {
         parts: [
+          ...imageParts,
           {
-            inlineData: {
-              data: base64Image,
-              mimeType: mimeType,
-            },
-          },
-          {
-            text: lang === 'ar' ? "قم بتحليل هذه الفاتورة الطبية." : "Analyze this medical invoice.",
+            text: lang === 'ar' ? "قم بتحليل هذه الفاتورة الطبية (قد تتكون من عدة صفحات)." : "Analyze this medical invoice (may consist of multiple pages).",
           },
         ],
       },
