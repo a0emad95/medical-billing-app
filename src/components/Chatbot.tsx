@@ -23,7 +23,7 @@ export function Chatbot({ report, lang }: { report: AuditReport | null, lang: 'e
     
     const ai = new GoogleGenAI({ apiKey });
     chatRef.current = ai.chats.create({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       config: {
         systemInstruction: `You are a helpful AI assistant for a Medical Billing Auditor app. 
         The user might ask you questions about the app or the currently analyzed invoice.
