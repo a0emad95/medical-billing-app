@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const getSystemInstruction = (lang: 'en' | 'ar') => {
-  const baseInstruction = `You are an elite Medical & Financial Billing Auditor Expert. Your job is to analyze medical invoices provided as images. Perform a rigorous three-tier audit (Administrative, Medical, Financial) based on standard healthcare guidelines.
+const getSystemInstruction = (lang: 'en' | 'ar', customInstructions?: string) => {
+  let baseInstruction = `You are an elite Medical & Financial Billing Auditor Expert. Your job is to analyze medical invoices provided as images. Perform a rigorous three-tier audit (Administrative, Medical, Financial) based on standard healthcare guidelines.
 
 1. Data Extraction: Extract all patient info, hospital data, dates, and itemized billing details.
 2. Administrative Audit: Check for missing doctor signatures, missing hospital stamps, date conflicts, and duplicate document numbers.
@@ -10,10 +10,15 @@ const getSystemInstruction = (lang: 'en' | 'ar') => {
    - Detect "Unbundling" (splitting a comprehensive package into individual items).
    - Flag unjustified high costs.
    - Flag vague items (e.g., "General Supplies") that lack detail.
+5. Statistical Analysis: You will analyze the provided images (which may be a single invoice or a batch of multiple invoices) and provide a statistical breakdown of the errors found.
 
 CRITICAL SPATIAL REQUIREMENT: For EVERY error, unjustified item, unbundling, vague item, or suspicious pricing you find, you MUST provide its bounding box in the original image. The bounding box must be an array of 4 numbers [ymin, xmin, ymax, xmax] scaled from 0 to 1000, where [0,0] is top-left and [1000,1000] is bottom-right. If you cannot find the exact location, return [0,0,0,0].
 
 You MUST respond ONLY with a valid JSON object strictly following the provided schema.`;
+
+  if (customInstructions) {
+    baseInstruction += `\n\nUSER CUSTOM INSTRUCTIONS (Pay special attention to these):\n${customInstructions}`;
+  }
 
   if (lang === 'ar') {
     return baseInstruction + `\n\nCRITICAL: You MUST translate all your output values (strings, reasons, explanations, notes) into Arabic. The JSON keys MUST remain in English as defined in the schema, but the values MUST be in Arabic. For example, "Pass" should be "ناجح", "Fail" should be "راسب", "Needs Review" should be "يحتاج مراجعة", "Approved" should be "مقبول", "Rejected" should be "مرفوض", "Partial Approval" should be "مقبول جزئياً".`;
@@ -56,9 +61,19 @@ export interface AuditReport {
     final_decision: "Approved" | "Rejected" | "Partial Approval" | "مقبول" | "مرفوض" | "مقبول جزئياً";
     notes: string;
   };
+  statistics: {
+    total_invoices_analyzed: number;
+    total_errors_found: number;
+    error_breakdown: {
+      administrative_errors: number;
+      medical_errors: number;
+      financial_errors: number;
+    };
+    common_issues: { issue_name: string; count: number }[];
+  };
 }
 
-export async function analyzeInvoice(images: {base64Image: string, mimeType: string}[], lang: 'en' | 'ar' = 'en'): Promise<AuditReport> {
+export async function analyzeInvoice(images: {base64Image: string, mimeType: string}[], lang: 'en' | 'ar' = 'en', customInstructions?: string): Promise<AuditReport> {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -80,7 +95,7 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
         ],
       },
       config: {
-        systemInstruction: getSystemInstruction(lang),
+        systemInstruction: getSystemInstruction(lang, customInstructions),
         temperature: 0.1,
         responseMimeType: "application/json",
         responseSchema: {
@@ -173,6 +188,31 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
                 notes: { type: Type.STRING },
               },
             },
+            statistics: {
+              type: Type.OBJECT,
+              properties: {
+                total_invoices_analyzed: { type: Type.NUMBER },
+                total_errors_found: { type: Type.NUMBER },
+                error_breakdown: {
+                  type: Type.OBJECT,
+                  properties: {
+                    administrative_errors: { type: Type.NUMBER },
+                    medical_errors: { type: Type.NUMBER },
+                    financial_errors: { type: Type.NUMBER },
+                  },
+                },
+                common_issues: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      issue_name: { type: Type.STRING },
+                      count: { type: Type.NUMBER },
+                    },
+                  },
+                },
+              },
+            },
           },
           required: [
             "report_metadata",
@@ -180,6 +220,7 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
             "medical_audit",
             "financial_audit",
             "overall_summary",
+            "statistics",
           ],
         },
       },

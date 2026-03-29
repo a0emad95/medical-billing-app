@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Globe, Plus, ArrowRight, ArrowLeft, Moon, Sun } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Globe, Plus, ArrowRight, ArrowLeft, Moon, Sun, BarChart3, Hospital, ShieldPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { analyzeInvoice, AuditReport } from './services/geminiService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,8 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [logo1Error, setLogo1Error] = useState(false);
+  const [logo2Error, setLogo2Error] = useState(false);
   
   const [lang, setLang] = useState<'en' | 'ar'>('ar');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -76,6 +79,7 @@ export default function App() {
   const [report, setReport] = useState<AuditReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [customInstructions, setCustomInstructions] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [history, setHistory] = useState<any[]>([]);
@@ -152,7 +156,7 @@ export default function App() {
 
       setImagePreviews(previews);
 
-      const result = await analyzeInvoice(imageDataArray, lang);
+      const result = await analyzeInvoice(imageDataArray, lang, customInstructions);
       setReport(result);
 
       // Save to history if logged in
@@ -234,33 +238,51 @@ export default function App() {
               className="flex flex-col items-center text-center max-w-2xl"
             >
               <div className="flex items-center justify-center gap-6 md:gap-12 mb-10">
-                <motion.img
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                  src="/LOGO1.png"
-                  alt="Logo 1"
-                  className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://placehold.co/400x400/eff6ff/2563eb?text=Medical+App";
-                  }}
-                />
+                {!logo1Error ? (
+                  <motion.img
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    src="/LOGO1.png"
+                    alt="Logo 1"
+                    className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
+                    referrerPolicy="no-referrer"
+                    onError={() => setLogo1Error(true)}
+                  />
+                ) : (
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="h-28 md:h-40 w-28 md:w-40 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-2xl border-2 border-blue-100 dark:border-blue-800/50"
+                  >
+                    <Hospital className="w-12 h-12 md:w-16 md:h-16 text-blue-500" />
+                  </motion.div>
+                )}
+                
                 <div className="h-20 w-px bg-slate-300 dark:bg-slate-700"></div>
-                <motion.img
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.4, duration: 0.5 }}
-                  src="/logo2.png"
-                  alt="Logo 2"
-                  className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://placehold.co/400x400/f8fafc/334155?text=New+Logo";
-                  }}
-                />
+                
+                {!logo2Error ? (
+                  <motion.img
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                    src="/logo2.png"
+                    alt="Logo 2"
+                    className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
+                    referrerPolicy="no-referrer"
+                    onError={() => setLogo2Error(true)}
+                  />
+                ) : (
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                    className="h-28 md:h-40 w-28 md:w-40 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50"
+                  >
+                    <ShieldPlus className="w-12 h-12 md:w-16 md:h-16 text-indigo-500" />
+                  </motion.div>
+                )}
               </div>
 
               <motion.h1
@@ -367,16 +389,19 @@ export default function App() {
       <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img 
-              src="/LOGO1.png" 
-              alt="صندوق الخدمات الطبية" 
-              className="h-10 w-auto object-contain dark:brightness-110" 
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "https://placehold.co/400x400/eff6ff/2563eb?text=Medical+App";
-              }}
-            />
+            {!logo1Error ? (
+              <img 
+                src="/LOGO1.png" 
+                alt="صندوق الخدمات الطبية" 
+                className="h-10 w-auto object-contain dark:brightness-110" 
+                referrerPolicy="no-referrer"
+                onError={() => setLogo1Error(true)}
+              />
+            ) : (
+              <div className="h-10 w-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50">
+                <Hospital className="w-6 h-6 text-blue-500" />
+              </div>
+            )}
             <span className="font-bold text-lg hidden sm:block">{t.appTitle}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -479,6 +504,21 @@ export default function App() {
                   <h3 className="font-semibold text-lg dark:text-slate-200">{t.uploadTitle}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">{t.uploadDesc}</p>
                 </div>
+                
+                <div className="w-full max-w-md mt-4 mb-4 text-start">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    {lang === 'ar' ? 'ملاحظات إضافية للتدقيق (اختياري)' : 'Custom Audit Instructions (Optional)'}
+                  </label>
+                  <textarea
+                    className="w-full p-3 border rounded-md dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    rows={3}
+                    placeholder={lang === 'ar' ? 'مثال: ركز على الأدوية الموصوفة، أو تأكد من توقيع الطبيب الفلاني...' : 'e.g., Focus on prescribed medications, or ensure specific doctor signature...'}
+                    value={customInstructions}
+                    onChange={(e) => setCustomInstructions(e.target.value)}
+                    disabled={isAnalyzing}
+                  />
+                </div>
+
                 <input
                   type="file"
                   accept="image/*"
@@ -584,6 +624,63 @@ export default function App() {
                 {/* Right Column: Audit Tiers */}
                 <div className="space-y-6 md:col-span-2">
                   
+                  {/* Statistics Chart */}
+                  {report.statistics && (
+                    <Card className="dark:bg-slate-900 dark:border-slate-800">
+                      <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+                          <CardTitle className="text-lg dark:text-slate-200">
+                            {lang === 'ar' ? 'إحصائيات التدقيق' : 'Audit Statistics'}
+                          </CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-center">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{report.statistics.total_invoices_analyzed}</div>
+                            <div className="text-sm text-slate-500 dark:text-slate-400">{lang === 'ar' ? 'إجمالي الفواتير' : 'Total Invoices'}</div>
+                          </div>
+                          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-center">
+                            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{report.statistics.total_errors_found}</div>
+                            <div className="text-sm text-red-500 dark:text-red-400">{lang === 'ar' ? 'إجمالي الأخطاء' : 'Total Errors'}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="h-64 w-full mt-4">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              data={[
+                                {
+                                  name: lang === 'ar' ? 'إداري' : 'Admin',
+                                  errors: report.statistics.error_breakdown.administrative_errors,
+                                },
+                                {
+                                  name: lang === 'ar' ? 'طبي' : 'Medical',
+                                  errors: report.statistics.error_breakdown.medical_errors,
+                                },
+                                {
+                                  name: lang === 'ar' ? 'مالي' : 'Financial',
+                                  errors: report.statistics.error_breakdown.financial_errors,
+                                }
+                              ]}
+                              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                              <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                              <Tooltip 
+                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                              />
+                              <Bar dataKey="errors" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Administrative Audit */}
                   <Card className="dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
