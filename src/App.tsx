@@ -800,6 +800,19 @@ export default function App() {
         </div>
       </div>
       
+      {/* Footer */}
+      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center gap-4">
+          <div className="flex items-center gap-6">
+            <img src="/png1.png" alt="Logo 1" className="h-12 w-auto object-contain" />
+            <img src="/png2.png" alt="Logo 2" className="h-12 w-auto object-contain" />
+          </div>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            {lang === 'ar' ? 'تصميم وتطوير احمد عماد' : 'Designed and developed by Ahmed Emad'}
+          </p>
+        </div>
+      </footer>
+
       {/* Chatbot Agent */}
       <Chatbot report={report} lang={lang} user={user} auditId={currentAuditId} />
     </div>
