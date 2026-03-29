@@ -9,9 +9,8 @@ import { AuditReport } from '../services/geminiService';
 import { translations } from '../translations';
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { User as FirebaseUser } from 'firebase/auth';
 
-export function Chatbot({ report, lang, user, auditId }: { report: AuditReport | null, lang: 'en' | 'ar', user?: FirebaseUser | null, auditId?: string | null }) {
+export function Chatbot({ report, lang, user, auditId }: { report: AuditReport | null, lang: 'en' | 'ar', user?: any | null, auditId?: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user'|'model', text: string}[]>([]);
   const [input, setInput] = useState('');

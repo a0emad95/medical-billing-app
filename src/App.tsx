@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { translations } from './translations';
 import { auth, db } from './firebase';
-import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { User as FirebaseUser } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { Chatbot } from './components/Chatbot';
 import { CroppedImage } from './components/CroppedImage';
@@ -58,7 +58,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [logo1Error, setLogo1Error] = useState(false);
@@ -87,11 +87,16 @@ export default function App() {
   const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setIsAuthReady(true);
-    });
-    return () => unsubscribe();
+    // Check for local mock user
+    const storedUser = localStorage.getItem('medaudit_local_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse local user", e);
+      }
+    }
+    setIsAuthReady(true);
   }, []);
 
   useEffect(() => {
@@ -113,14 +118,15 @@ export default function App() {
   }, [user, isAuthReady]);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    localStorage.removeItem('medaudit_local_user');
+    setUser(null);
     setIsGuest(false);
     setReport(null);
     setImagePreviews([]);
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+    const files = Array.from(event.target.files || []) as File[];
     if (files.length === 0) return;
 
     setReport(null);
@@ -325,7 +331,7 @@ export default function App() {
               transition={{ duration: 0.5 }}
               className="w-full max-w-md"
             >
-              <Login lang={lang} onBack={() => setShowLogin(false)} />
+              <Login lang={lang} onBack={() => setShowLogin(false)} onLogin={(u) => setUser(u)} />
             </motion.div>
           )}
         </AnimatePresence>

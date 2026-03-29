@@ -19,11 +19,17 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
+    function isAllowedLocalUser(userId) {
+      // Allow access for specific hardcoded local users without Firebase Auth
+      return userId in ['user1', 'user2', 'user3', 'user4', 'user5'];
+    }
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return (isAuthenticated() && request.auth.uid == userId) || isAllowedLocalUser(userId);
     }
     function uidUnchanged() {
-      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+      return !('uid' in request.resource.data) || 
+             (isAuthenticated() && request.resource.data.uid == request.auth.uid) ||
+             isAllowedLocalUser(request.resource.data.uid);
     }
     function uidNotModified() {
       return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
