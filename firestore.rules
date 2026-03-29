@@ -46,6 +46,16 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidInvoiceReport() && uidUnchanged();
       allow update: if isOwner(userId) && isValidInvoiceReport() && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isOwner(userId);
+
+      match /chat/{messageId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                      request.resource.data.keys().hasAll(['role', 'text', 'createdAt']) && 
+                      request.resource.data.role in ['user', 'model'] && 
+                      request.resource.data.text is string &&
+                      request.resource.data.text.size() < 10000;
+        allow update, delete: if false;
+      }
     }
   }
 }

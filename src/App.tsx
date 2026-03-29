@@ -10,11 +10,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { translations } from './translations';
-import { auth, db, googleProvider } from './firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth, db } from './firebase';
+import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { Chatbot } from './components/Chatbot';
 import { CroppedImage } from './components/CroppedImage';
+import { Login } from './components/Login';
 
 enum OperationType {
   CREATE = 'create',
@@ -59,7 +60,7 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isGuest, setIsGuest] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
   const [logo1Error, setLogo1Error] = useState(false);
   const [logo2Error, setLogo2Error] = useState(false);
   
@@ -77,6 +78,7 @@ export default function App() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<AuditReport | null>(null);
+  const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [customInstructions, setCustomInstructions] = useState('');
@@ -110,16 +112,6 @@ export default function App() {
     }
   }, [user, isAuthReady]);
 
-  const handleLogin = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      setIsGuest(false);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to sign in.");
-    }
-  };
-
   const handleLogout = async () => {
     await signOut(auth);
     setIsGuest(false);
@@ -132,6 +124,7 @@ export default function App() {
     if (files.length === 0) return;
 
     setReport(null);
+    setCurrentAuditId(null);
     setError(null);
     setIsAnalyzing(true);
     setImagePreviews([]);
@@ -163,12 +156,13 @@ export default function App() {
       if (user) {
         const path = `users/${user.uid}/invoices`;
         try {
-          await addDoc(collection(db, path), {
+          const docRef = await addDoc(collection(db, path), {
             uid: user.uid,
             createdAt: new Date().toISOString(),
             language: lang,
             report: result
           });
+          setCurrentAuditId(docRef.id);
         } catch (err) {
           handleFirestoreError(err, OperationType.CREATE, path);
         }
@@ -228,7 +222,7 @@ export default function App() {
           </Button>
         </div>
         <AnimatePresence mode="wait">
-          {showWelcome ? (
+          {!showLogin ? (
             <motion.div
               key="welcome"
               initial={{ opacity: 0, y: 20 }}
@@ -243,7 +237,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    src="/LOGO1.png"
+                    src="/1.png"
                     alt="Logo 1"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -267,7 +261,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    src="/logo2.png"
+                    src="/2.png"
                     alt="Logo 2"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -312,7 +306,7 @@ export default function App() {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowWelcome(false)}
+                  onClick={() => setShowLogin(true)}
                   className="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.5)] hover:shadow-[0_0_50px_rgba(37,99,235,0.8)] transition-all"
                 >
                   {lang === 'ar' ? <ArrowLeft className="w-10 h-10" /> : <ArrowRight className="w-10 h-10" />}
@@ -331,51 +325,7 @@ export default function App() {
               transition={{ duration: 0.5 }}
               className="w-full max-w-md"
             >
-              <Card className="w-full shadow-2xl border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-4 left-4 z-10"
-                  onClick={() => setShowWelcome(true)}
-                  style={{ [lang === 'ar' ? 'right' : 'left']: '1rem', left: 'auto' }}
-                >
-                  {lang === 'ar' ? <ArrowRight className="w-5 h-5 text-slate-500" /> : <ArrowLeft className="w-5 h-5 text-slate-500" />}
-                </Button>
-                <CardHeader className="text-center pb-2 pt-10">
-                  <div className="mx-auto flex items-center justify-center mb-6">
-                    <img 
-                      src="/LOGO1.png" 
-                      alt="صندوق الخدمات الطبية" 
-                      className="h-20 w-auto object-contain dark:brightness-110" 
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "https://placehold.co/400x400/eff6ff/2563eb?text=Medical+App";
-                      }}
-                    />
-                  </div>
-                  <CardTitle className="text-2xl">{t.loginTitle}</CardTitle>
-                  <CardDescription className="text-base">{t.loginDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-4">
-                  <Button className="w-full h-12 text-lg" onClick={handleLogin}>
-                    <LogIn className="w-5 h-5 mr-2" />
-                    {t.signInGoogle}
-                  </Button>
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t dark:border-slate-700" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white dark:bg-slate-900 px-2 text-slate-500 dark:text-slate-400">OR</span>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full h-12 text-lg dark:border-slate-700 dark:text-white" onClick={() => setIsGuest(true)}>
-                    <User className="w-5 h-5 mr-2" />
-                    {t.continueGuest}
-                  </Button>
-                </CardContent>
-              </Card>
+              <Login lang={lang} onBack={() => setShowLogin(false)} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -391,7 +341,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             {!logo1Error ? (
               <img 
-                src="/LOGO1.png" 
+                src="/1.png" 
                 alt="صندوق الخدمات الطبية" 
                 className="h-10 w-auto object-contain dark:brightness-110" 
                 referrerPolicy="no-referrer"
@@ -419,8 +369,8 @@ export default function App() {
               </Button>
             ) : (
               <Button variant="outline" size="sm" onClick={() => setIsGuest(false)}>
-                <LogIn className="w-4 h-4 mr-2" />
-                {t.loginTitle}
+                {lang === 'ar' ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
+                {lang === 'ar' ? 'الرئيسية' : 'Home'}
               </Button>
             )}
           </div>
@@ -437,7 +387,7 @@ export default function App() {
                 <History className="w-5 h-5 text-slate-500" />
                 {t.history}
               </h2>
-              <Button variant="ghost" size="icon" onClick={() => { setReport(null); setImagePreviews([]); }}>
+              <Button variant="ghost" size="icon" onClick={() => { setReport(null); setCurrentAuditId(null); setImagePreviews([]); }}>
                 <Plus className="w-5 h-5" />
               </Button>
             </div>
@@ -452,7 +402,8 @@ export default function App() {
                       className="cursor-pointer hover:border-blue-300 dark:bg-slate-900 dark:border-slate-800 dark:hover:border-blue-700 transition-colors"
                       onClick={() => {
                         setReport(item.report);
-                        setImagePreviews([]); // We don't save images to save space, so clear preview
+                        setCurrentAuditId(item.id);
+                        setImagePreviews(item.imagePreviews || []); // Load previews if available
                       }}
                     >
                       <CardContent className="p-3">
@@ -844,7 +795,7 @@ export default function App() {
       </div>
       
       {/* Chatbot Agent */}
-      <Chatbot report={report} lang={lang} />
+      <Chatbot report={report} lang={lang} user={user} auditId={currentAuditId} />
     </div>
   );
 }

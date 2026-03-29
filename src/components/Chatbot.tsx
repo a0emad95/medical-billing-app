@@ -7,52 +7,100 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { GoogleGenAI } from '@google/genai';
 import { AuditReport } from '../services/geminiService';
 import { translations } from '../translations';
+import { db } from '../firebase';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { User as FirebaseUser } from 'firebase/auth';
 
-export function Chatbot({ report, lang }: { report: AuditReport | null, lang: 'en' | 'ar' }) {
+export function Chatbot({ report, lang, user, auditId }: { report: AuditReport | null, lang: 'en' | 'ar', user?: FirebaseUser | null, auditId?: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user'|'model', text: string}[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const chatRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
-
-  useEffect(() => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return;
-    
-    const ai = new GoogleGenAI({ apiKey });
-    chatRef.current = ai.chats.create({
-      model: "gemini-3-flash-preview",
-      config: {
-        systemInstruction: `You are a helpful AI assistant for a Medical Billing Auditor app. 
-        The user might ask you questions about the app or the currently analyzed invoice.
-        Current Invoice Report Context: ${report ? JSON.stringify(report) : 'No invoice analyzed yet.'}
-        Respond in ${lang === 'ar' ? 'Arabic' : 'English'}. Be concise, friendly, and helpful.`,
-        temperature: 0.5,
-      }
-    });
-    setMessages([{ role: 'model', text: t.chatEmpty }]);
-  }, [report, lang, t.chatEmpty]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (user && auditId) {
+      const q = query(collection(db, `users/${user.uid}/invoices/${auditId}/chat`), orderBy('createdAt', 'asc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const loadedMessages = snapshot.docs.map(doc => doc.data() as {role: 'user'|'model', text: string});
+        if (loadedMessages.length > 0) {
+          setMessages([{ role: 'model', text: t.chatEmpty }, ...loadedMessages]);
+        } else {
+          setMessages([{ role: 'model', text: t.chatEmpty }]);
+        }
+      });
+      return () => unsubscribe();
+    } else {
+      setMessages([{ role: 'model', text: t.chatEmpty }]);
+    }
+  }, [user, auditId, t.chatEmpty]);
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!input.trim() || !chatRef.current) return;
+    if (!input.trim()) return;
     const userMsg = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    
+    // Optimistic update if not saving to DB
+    if (!user || !auditId) {
+      setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    } else {
+      await addDoc(collection(db, `users/${user.uid}/invoices/${auditId}/chat`), {
+        role: 'user',
+        text: userMsg,
+        createdAt: serverTimestamp()
+      });
+    }
+
     setIsLoading(true);
 
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return;
+    
+    const ai = new GoogleGenAI({ apiKey });
+    const systemInstruction = `You are a helpful AI assistant for a Medical Billing Auditor app. 
+        The user might ask you questions about the app or the currently analyzed invoice.
+        Current Invoice Report Context: ${report ? JSON.stringify(report) : 'No invoice analyzed yet.'}
+        Respond in ${lang === 'ar' ? 'Arabic' : 'English'}. Be concise, friendly, and helpful.`;
+
+    const contents = messages
+      .filter(m => m.text !== t.chatEmpty) // Don't send the greeting to the model
+      .map(m => ({
+        role: m.role === 'model' ? 'model' : 'user',
+        parts: [{ text: m.text }]
+      }));
+      
+    contents.push({ role: 'user', parts: [{ text: userMsg }] });
+
     try {
-      const response = await chatRef.current.sendMessage({ message: userMsg });
-      setMessages(prev => [...prev, { role: 'model', text: response.text || '' }]);
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: contents,
+        config: {
+          systemInstruction,
+          temperature: 0.5,
+        }
+      });
+      
+      if (!user || !auditId) {
+        setMessages(prev => [...prev, { role: 'model', text: response.text || '' }]);
+      } else {
+        await addDoc(collection(db, `users/${user.uid}/invoices/${auditId}/chat`), {
+          role: 'model',
+          text: response.text || '',
+          createdAt: serverTimestamp()
+        });
+      }
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'model', text: t.error }]);
+      if (!user || !auditId) {
+        setMessages(prev => [...prev, { role: 'model', text: t.error }]);
+      }
     } finally {
       setIsLoading(false);
     }
