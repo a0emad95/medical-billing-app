@@ -237,7 +237,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    src="/1.png"
+                    src="/png1.png"
                     alt="Logo 1"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -261,7 +261,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    src="/2.png"
+                    src="/png2.png"
                     alt="Logo 2"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -341,7 +341,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             {!logo1Error ? (
               <img 
-                src="/1.png" 
+                src="/png1.png" 
                 alt="صندوق الخدمات الطبية" 
                 className="h-10 w-auto object-contain dark:brightness-110" 
                 referrerPolicy="no-referrer"
