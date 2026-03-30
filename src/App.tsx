@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Plus, ArrowRight, ArrowLeft, Moon, Sun, BarChart3, Hospital, ShieldPlus } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Plus, ArrowRight, ArrowLeft, Moon, Sun, BarChart3, Hospital, ShieldPlus, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar } from 'recharts';
 import { analyzeInvoice, AuditReport } from './services/geminiService';
@@ -577,7 +577,7 @@ export default function App() {
                   
                   {/* Statistics Chart */}
                   {report.statistics && (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                         <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
                           <div className="flex items-center gap-2">
@@ -666,6 +666,40 @@ export default function App() {
                           </div>
                         </CardContent>
                       </Card>
+
+                      {report.statistics.common_issues && report.statistics.common_issues.length > 0 && (
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="w-5 h-5 text-orange-500 dark:text-orange-400" />
+                              <CardTitle className="text-lg dark:text-slate-200">
+                                {lang === 'ar' ? 'أكثر الأخطاء شيوعاً' : 'Common Issues'}
+                              </CardTitle>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-6">
+                            <div className="h-[360px] w-full relative">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={report.statistics.common_issues} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={theme === 'dark' ? '#334155' : '#e2e8f0'} />
+                                  <XAxis type="number" stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} />
+                                  <YAxis dataKey="issue_name" type="category" width={100} stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} tick={{ fontSize: 11 }} />
+                                  <Tooltip 
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff', color: theme === 'dark' ? '#f8fafc' : '#0f172a', padding: '12px' }}
+                                    itemStyle={{ color: theme === 'dark' ? '#f8fafc' : '#1e293b', fontWeight: 600 }}
+                                    cursor={{ fill: theme === 'dark' ? '#334155' : '#f1f5f9' }}
+                                  />
+                                  <Bar dataKey="count" fill="#f97316" radius={[0, 4, 4, 0]}>
+                                    {report.statistics.common_issues.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={['#f97316', '#eab308', '#84cc16', '#06b6d4', '#8b5cf6'][index % 5]} />
+                                    ))}
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
                     </motion.div>
                   )}
 

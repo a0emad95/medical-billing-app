@@ -98,7 +98,7 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
     }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-pro-preview",
       contents: {
         parts: [
           ...imageParts,
