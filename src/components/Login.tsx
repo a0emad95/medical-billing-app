@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const ALLOWED_USERS: Record<string, string> = {
   'user1': 'pass123',
-  'user2': 'pass123',
+  'm.radwan': 'pass123',
   'user3': 'pass123',
   'user4': 'pass123',
   'user5': 'pass123',
@@ -63,7 +63,7 @@ export function Login({ lang, onBack, onLogin }: { lang: 'en' | 'ar', onBack: ()
           <div className="space-y-2">
             <Input
               type="text"
-              placeholder={lang === 'ar' ? 'اسم المستخدم (مثال: user1)' : 'Username (e.g. user1)'}
+              placeholder={lang === 'ar' ? 'اسم المستخدم' : 'Username'}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required

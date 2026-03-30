@@ -21,7 +21,7 @@ service cloud.firestore {
     }
     function isAllowedLocalUser(userId) {
       // Allow access for specific hardcoded local users without Firebase Auth
-      return userId in ['user1', 'user2', 'user3', 'user4', 'user5'];
+      return userId in ['user1', 'm.radwan', 'user3', 'user4', 'user5'];
     }
     function isOwner(userId) {
       return (isAuthenticated() && request.auth.uid == userId) || isAllowedLocalUser(userId);
