@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Globe, Plus, ArrowRight, ArrowLeft, Moon, Sun, BarChart3, Hospital, ShieldPlus } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Plus, ArrowRight, ArrowLeft, Moon, Sun, BarChart3, Hospital, ShieldPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { analyzeInvoice, AuditReport } from './services/geminiService';
@@ -64,7 +64,7 @@ export default function App() {
   const [logo1Error, setLogo1Error] = useState(false);
   const [logo2Error, setLogo2Error] = useState(false);
   
-  const [lang, setLang] = useState<'en' | 'ar'>('ar');
+  const lang = 'ar';
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const t = translations[lang];
 
@@ -222,10 +222,6 @@ export default function App() {
           <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="bg-white/50 backdrop-blur-sm dark:bg-slate-800/50 dark:text-white dark:border-slate-700">
             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </Button>
-          <Button variant="outline" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')} className="bg-white/50 backdrop-blur-sm dark:bg-slate-800/50 dark:text-white dark:border-slate-700">
-            <Globe className="w-4 h-4 mr-2" />
-            {lang === 'en' ? 'العربية' : 'English'}
-          </Button>
         </div>
         <AnimatePresence mode="wait">
           {!showLogin ? (
@@ -243,7 +239,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    src="/png1.png"
+                    src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m"
                     alt="Logo 1"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -267,7 +263,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    src="/png2.png"
+                    src="https://lh3.googleusercontent.com/d/1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp"
                     alt="Logo 2"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -347,7 +343,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             {!logo1Error ? (
               <img 
-                src="/png1.png" 
+                src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" 
                 alt="صندوق الخدمات الطبية" 
                 className="h-10 w-auto object-contain dark:brightness-110" 
                 referrerPolicy="no-referrer"
@@ -363,10 +359,6 @@ export default function App() {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}>
-              <Globe className="w-4 h-4 mr-2" />
-              {lang === 'en' ? 'العربية' : 'English'}
             </Button>
             {user ? (
               <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -804,8 +796,8 @@ export default function App() {
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-6">
-            <img src="/png1.png" alt="Logo 1" className="h-12 w-auto object-contain" />
-            <img src="/png2.png" alt="Logo 2" className="h-12 w-auto object-contain" />
+            <img src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" alt="Logo 1" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://lh3.googleusercontent.com/d/1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp" alt="Logo 2" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
           </div>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {lang === 'ar' ? 'تصميم وتطوير احمد عماد' : 'Designed and developed by Ahmed Emad'}
