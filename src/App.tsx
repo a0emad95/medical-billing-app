@@ -239,7 +239,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    src="https://drive.google.com/uc?export=view&id=1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m"
+                    src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m"
                     alt="Logo 1"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -263,7 +263,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    src="https://drive.google.com/uc?export=view&id=1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp"
+                    src="https://lh3.googleusercontent.com/d/1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp"
                     alt="Logo 2"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -343,7 +343,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             {!logo1Error ? (
               <img 
-                src="https://drive.google.com/uc?export=view&id=1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" 
+                src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" 
                 alt="صندوق الخدمات الطبية" 
                 className="h-10 w-auto object-contain dark:brightness-110" 
                 referrerPolicy="no-referrer"
@@ -876,8 +876,8 @@ export default function App() {
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-6">
-            <img src="https://drive.google.com/uc?export=view&id=1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" alt="Logo 1" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
-            <img src="https://drive.google.com/uc?export=view&id=1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp" alt="Logo 2" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" alt="Logo 1" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://lh3.googleusercontent.com/d/1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp" alt="Logo 2" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
           </div>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {lang === 'ar' ? 'تصميم وتطوير احمد عماد' : 'Designed and developed by Ahmed Emad'}
