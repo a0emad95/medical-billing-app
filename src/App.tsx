@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Activity, DollarSign, FileWarning, Loader2, LogIn, User, History, LogOut, Plus, ArrowRight, ArrowLeft, Moon, Sun, BarChart3, Hospital, ShieldPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar } from 'recharts';
 import { analyzeInvoice, AuditReport } from './services/geminiService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -431,19 +431,20 @@ export default function App() {
           
           {/* Header */}
           {!report && (
-            <header className="text-center space-y-2 py-8">
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 flex items-center justify-center gap-3">
-                <Activity className="w-8 h-8 text-blue-600" />
+            <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center space-y-2 py-8">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center justify-center gap-3">
+                <Activity className="w-8 h-8 text-blue-600 dark:text-blue-500" />
                 {t.appTitle}
               </h1>
-              <p className="text-slate-500 max-w-2xl mx-auto">
+              <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
                 {t.appDesc}
               </p>
-            </header>
+            </motion.header>
           )}
 
           {/* Upload Area */}
           {!report && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, duration: 0.5 }}>
             <Card className="border-dashed border-2 bg-white/50 hover:bg-white/80 dark:bg-slate-900/50 dark:hover:bg-slate-900/80 dark:border-slate-700 transition-colors">
               <CardContent className="p-8 md:p-12 flex flex-col items-center justify-center text-center space-y-4">
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
@@ -476,7 +477,7 @@ export default function App() {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                 />
-                <Button onClick={() => fileInputRef.current?.click()} disabled={isAnalyzing}>
+                <Button size="lg" className="mt-4 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all" onClick={() => fileInputRef.current?.click()} disabled={isAnalyzing}>
                   {isAnalyzing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -488,6 +489,7 @@ export default function App() {
                 </Button>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Error State */}
@@ -513,9 +515,9 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Left Column: Image Preview & Metadata */}
-                <div className="space-y-6 md:col-span-1">
-                  <Card className="dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="pb-3">
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1, duration: 0.5 }} className="space-y-6 md:col-span-1">
+                  <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                    <CardHeader className="pb-3 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
                       <CardTitle className="text-lg flex items-center gap-2 dark:text-slate-200">
                         <FileText className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                         {t.invoiceDetails}
@@ -550,8 +552,8 @@ export default function App() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-slate-900 text-slate-50 border-slate-800 dark:bg-slate-950">
-                    <CardHeader className="pb-2">
+                  <Card className="bg-slate-900 text-slate-50 border-slate-800 dark:bg-slate-950 overflow-hidden shadow-lg">
+                    <CardHeader className="pb-2 bg-slate-800/50 border-b border-slate-800">
                       <CardTitle className="text-lg">{t.overallDecision}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -568,77 +570,115 @@ export default function App() {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
 
                 {/* Right Column: Audit Tiers */}
                 <div className="space-y-6 md:col-span-2">
                   
                   {/* Statistics Chart */}
                   {report.statistics && (
-                    <Card className="dark:bg-slate-900 dark:border-slate-800">
-                      <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="w-5 h-5 text-purple-500 dark:text-purple-400" />
-                          <CardTitle className="text-lg dark:text-slate-200">
-                            {lang === 'ar' ? 'إحصائيات التدقيق' : 'Audit Statistics'}
-                          </CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-center">
-                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{report.statistics.total_invoices_analyzed}</div>
-                            <div className="text-sm text-slate-500 dark:text-slate-400">{lang === 'ar' ? 'إجمالي الفواتير' : 'Total Invoices'}</div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
+                      <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+                            <CardTitle className="text-lg dark:text-slate-200">
+                              {lang === 'ar' ? 'إحصائيات التدقيق' : 'Audit Statistics'}
+                            </CardTitle>
                           </div>
-                          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-center">
-                            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{report.statistics.total_errors_found}</div>
-                            <div className="text-sm text-red-500 dark:text-red-400">{lang === 'ar' ? 'إجمالي الأخطاء' : 'Total Errors'}</div>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <div className="grid grid-cols-2 gap-4 mb-2">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-center border border-slate-100 dark:border-slate-800">
+                              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{report.statistics.total_invoices_analyzed}</div>
+                              <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{lang === 'ar' ? 'إجمالي الفواتير' : 'Total Invoices'}</div>
+                            </div>
+                            <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl text-center border border-red-100 dark:border-red-900/30">
+                              <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">{report.statistics.total_errors_found}</div>
+                              <div className="text-xs font-medium text-red-500 dark:text-red-400 uppercase tracking-wider">{lang === 'ar' ? 'إجمالي الأخطاء' : 'Total Errors'}</div>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="h-64 w-full mt-4">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              data={[
+                          
+                          <div className="h-72 w-full mt-6 relative">
+                            {(() => {
+                              const chartData = [
                                 {
                                   name: lang === 'ar' ? 'إداري' : 'Admin',
-                                  errors: report.statistics.error_breakdown.administrative_errors,
+                                  value: report.statistics.error_breakdown.administrative_errors,
+                                  color: '#0ea5e9' // sky-500
                                 },
                                 {
                                   name: lang === 'ar' ? 'طبي' : 'Medical',
-                                  errors: report.statistics.error_breakdown.medical_errors,
+                                  value: report.statistics.error_breakdown.medical_errors,
+                                  color: '#e11d48' // rose-600
                                 },
                                 {
                                   name: lang === 'ar' ? 'مالي' : 'Financial',
-                                  errors: report.statistics.error_breakdown.financial_errors,
+                                  value: report.statistics.error_breakdown.financial_errors,
+                                  color: '#65a30d' // lime-600
                                 }
-                              ]}
-                              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                              <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                              <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                              <Tooltip 
-                                cursor={{fill: 'transparent'}}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                              />
-                              <Bar dataKey="errors" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
+                              ].filter(item => item.value > 0);
+
+                              return (
+                                <>
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                                    <span className="text-4xl font-bold text-slate-800 dark:text-slate-100">
+                                      {report.statistics.total_errors_found}
+                                    </span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                                      {lang === 'ar' ? 'أخطاء' : 'Errors'}
+                                    </span>
+                                  </div>
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                      <Pie
+                                        data={chartData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={75}
+                                        outerRadius={105}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                        stroke="none"
+                                        cornerRadius={6}
+                                      >
+                                        {chartData.map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                      </Pie>
+                                      <Tooltip 
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff', color: theme === 'dark' ? '#f8fafc' : '#0f172a', padding: '12px' }}
+                                        itemStyle={{ color: theme === 'dark' ? '#f8fafc' : '#1e293b', fontWeight: 600 }}
+                                        cursor={{ fill: 'transparent' }}
+                                      />
+                                      <Legend 
+                                        iconType="circle" 
+                                        iconSize={10} 
+                                        verticalAlign="bottom" 
+                                        height={36} 
+                                        wrapperStyle={{ paddingTop: '20px' }}
+                                      />
+                                    </PieChart>
+                                  </ResponsiveContainer>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   )}
 
                   {/* Administrative Audit */}
-                  <Card className="dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                      <div className="flex items-center gap-2">
-                        <FileWarning className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
-                        <CardTitle className="text-lg dark:text-slate-200">{t.adminAudit}</CardTitle>
-                      </div>
-                      <StatusBadge status={report.administrative_audit.status} />
-                    </CardHeader>
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
+                    <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                      <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <FileWarning className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                          <CardTitle className="text-lg dark:text-slate-200">{t.adminAudit}</CardTitle>
+                        </div>
+                        <StatusBadge status={report.administrative_audit.status} />
+                      </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 text-sm">
@@ -678,10 +718,12 @@ export default function App() {
                       </div>
                     </CardContent>
                   </Card>
+                  </motion.div>
 
                   {/* Medical Logic Audit */}
-                  <Card className="dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
+                  <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <Activity className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                         <CardTitle className="text-lg dark:text-slate-200">{t.medicalAudit}</CardTitle>
@@ -716,10 +758,12 @@ export default function App() {
                       )}
                     </CardContent>
                   </Card>
+                  </motion.div>
 
                   {/* Financial Fraud Audit */}
-                  <Card className="dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.5 }}>
+                  <Card className="dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
                         <CardTitle className="text-lg dark:text-slate-200">{t.financialAudit}</CardTitle>
@@ -818,6 +862,7 @@ export default function App() {
 
                     </CardContent>
                   </Card>
+                  </motion.div>
 
                 </div>
               </div>
