@@ -48,7 +48,7 @@ export interface AuditReport {
   administrative_audit: {
     status: "Pass" | "Fail" | "ناجح" | "راسب";
     missing_signatures: boolean;
-    errors: { message: string; bounding_box: [number, number, number, number] }[] | string[];
+    errors: { message: string; bounding_box: [number, number, number, number]; image_index?: number }[] | string[];
   };
   medical_audit: {
     status: "Pass" | "Needs Review" | "ناجح" | "يحتاج مراجعة";
@@ -56,6 +56,7 @@ export interface AuditReport {
       item_name: string;
       reason: string;
       bounding_box?: [number, number, number, number];
+      image_index?: number;
     }[];
   };
   financial_audit: {
@@ -64,9 +65,10 @@ export interface AuditReport {
       separated_items: string[];
       explanation: string;
       bounding_box?: [number, number, number, number];
+      image_index?: number;
     }[];
-    vague_items: { item: string; bounding_box: [number, number, number, number] }[] | string[];
-    suspicious_pricing: { item: string; bounding_box: [number, number, number, number] }[] | string[];
+    vague_items: { item: string; bounding_box: [number, number, number, number]; image_index?: number }[] | string[];
+    suspicious_pricing: { item: string; bounding_box: [number, number, number, number]; image_index?: number }[] | string[];
   };
   overall_summary: {
     final_decision: "Approved" | "Rejected" | "Partial Approval" | "مقبول" | "مرفوض" | "مقبول جزئياً";
@@ -132,7 +134,8 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
                     type: Type.OBJECT,
                     properties: {
                       message: { type: Type.STRING },
-                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                      image_index: { type: Type.NUMBER, description: "0-based index of the image where this error is found" }
                     }
                   } 
                 },
@@ -149,7 +152,8 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
                     properties: {
                       item_name: { type: Type.STRING },
                       reason: { type: Type.STRING },
-                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                      image_index: { type: Type.NUMBER, description: "0-based index of the image where this item is found" }
                     },
                   },
                 },
@@ -166,7 +170,8 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
                     properties: {
                       separated_items: { type: Type.ARRAY, items: { type: Type.STRING } },
                       explanation: { type: Type.STRING },
-                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                      image_index: { type: Type.NUMBER, description: "0-based index of the image where this issue is found" }
                     },
                   },
                 },
@@ -176,7 +181,8 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
                     type: Type.OBJECT,
                     properties: {
                       item: { type: Type.STRING },
-                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                      image_index: { type: Type.NUMBER, description: "0-based index of the image where this item is found" }
                     }
                   } 
                 },
@@ -186,7 +192,8 @@ export async function analyzeInvoice(images: {base64Image: string, mimeType: str
                     type: Type.OBJECT,
                     properties: {
                       item: { type: Type.STRING },
-                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                      bounding_box: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                      image_index: { type: Type.NUMBER, description: "0-based index of the image where this item is found" }
                     }
                   } 
                 },

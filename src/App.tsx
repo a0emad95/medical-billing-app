@@ -239,7 +239,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m"
+                    src="/png1.png"
                     alt="Logo 1"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -263,7 +263,7 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    src="https://lh3.googleusercontent.com/d/1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp"
+                    src="/png2.png"
                     alt="Logo 2"
                     className="h-28 md:h-40 w-auto object-contain drop-shadow-lg rounded-2xl dark:brightness-110"
                     referrerPolicy="no-referrer"
@@ -343,7 +343,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             {!logo1Error ? (
               <img 
-                src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" 
+                src="/png1.png" 
                 alt="صندوق الخدمات الطبية" 
                 className="h-10 w-auto object-contain dark:brightness-110" 
                 referrerPolicy="no-referrer"
@@ -660,8 +660,15 @@ export default function App() {
                                 const bbox = isObj ? err.bounding_box : null;
                                 return (
                                   <li key={i}>
-                                    <div>{msg}</div>
-                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={bbox} />}
+                                    <div>
+                                      {msg}
+                                      {imagePreviews.length > 1 && isObj && err.image_index !== undefined && (
+                                        <span className="text-xs text-slate-500 ml-2">
+                                          ({t.invoice} {err.image_index + 1})
+                                        </span>
+                                      )}
+                                    </div>
+                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[isObj && err.image_index !== undefined ? err.image_index : 0] || imagePreviews[0]} bbox={bbox} />}
                                   </li>
                                 );
                               })}
@@ -689,9 +696,16 @@ export default function App() {
                             <div className="space-y-3">
                               {report.medical_audit.unjustified_medical_items.map((item: any, i: number) => (
                                 <div key={i} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-md border border-slate-100 dark:border-slate-700">
-                                  <div className="font-medium text-sm text-slate-900 dark:text-slate-200">{item.item_name}</div>
+                                  <div className="font-medium text-sm text-slate-900 dark:text-slate-200">
+                                    {item.item_name}
+                                    {imagePreviews.length > 1 && item.image_index !== undefined && (
+                                      <span className="text-xs text-slate-500 ml-2 font-normal">
+                                        ({t.invoice} {item.image_index + 1})
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{item.reason}</div>
-                                  {item.bounding_box && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={item.bounding_box} />}
+                                  {item.bounding_box && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[item.image_index !== undefined ? item.image_index : 0] || imagePreviews[0]} bbox={item.bounding_box} />}
                                 </div>
                               ))}
                             </div>
@@ -722,14 +736,21 @@ export default function App() {
                           </span>
                           {report.financial_audit.unbundling_detected.map((item: any, i: number) => (
                             <div key={i} className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md border border-amber-100 dark:border-amber-800/50 text-sm">
-                              <div className="font-medium text-amber-900 dark:text-amber-400 mb-1">{t.separatedItems}</div>
+                              <div className="font-medium text-amber-900 dark:text-amber-400 mb-1">
+                                {t.separatedItems}
+                                {imagePreviews.length > 1 && item.image_index !== undefined && (
+                                  <span className="text-xs text-amber-700/70 ml-2 font-normal">
+                                    ({t.invoice} {item.image_index + 1})
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {item.separated_items.map((sep: string, j: number) => (
                                   <Badge key={j} variant="outline" className="bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800">{sep}</Badge>
                                 ))}
                               </div>
                               <div className="text-amber-800 dark:text-amber-500">{item.explanation}</div>
-                              {item.bounding_box && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={item.bounding_box} />}
+                              {item.bounding_box && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[item.image_index !== undefined ? item.image_index : 0] || imagePreviews[0]} bbox={item.bounding_box} />}
                             </div>
                           ))}
                         </div>
@@ -746,8 +767,15 @@ export default function App() {
                                 const bbox = isObj ? item.bounding_box : null;
                                 return (
                                   <li key={i}>
-                                    <div>{name}</div>
-                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={bbox} />}
+                                    <div>
+                                      {name}
+                                      {imagePreviews.length > 1 && isObj && item.image_index !== undefined && (
+                                        <span className="text-xs text-slate-500 ml-2">
+                                          ({t.invoice} {item.image_index + 1})
+                                        </span>
+                                      )}
+                                    </div>
+                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[isObj && item.image_index !== undefined ? item.image_index : 0] || imagePreviews[0]} bbox={bbox} />}
                                   </li>
                                 );
                               })}
@@ -765,8 +793,15 @@ export default function App() {
                                 const bbox = isObj ? item.bounding_box : null;
                                 return (
                                   <li key={i}>
-                                    <div>{name}</div>
-                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[0]} bbox={bbox} />}
+                                    <div>
+                                      {name}
+                                      {imagePreviews.length > 1 && isObj && item.image_index !== undefined && (
+                                        <span className="text-xs text-slate-500 ml-2">
+                                          ({t.invoice} {item.image_index + 1})
+                                        </span>
+                                      )}
+                                    </div>
+                                    {bbox && imagePreviews.length > 0 && <CroppedImage src={imagePreviews[isObj && item.image_index !== undefined ? item.image_index : 0] || imagePreviews[0]} bbox={bbox} />}
                                   </li>
                                 );
                               })}
@@ -796,8 +831,8 @@ export default function App() {
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-6">
-            <img src="https://lh3.googleusercontent.com/d/1A5A6YMWyPqZdNHRSTYHC2i9iOE7R4p7m" alt="Logo 1" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
-            <img src="https://lh3.googleusercontent.com/d/1F_tLNzuhPN4gVQd21WZTbOLeHyQ2yCPp" alt="Logo 2" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="/png1.png" alt="Logo 1" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="/png2.png" alt="Logo 2" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
           </div>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {lang === 'ar' ? 'تصميم وتطوير احمد عماد' : 'Designed and developed by Ahmed Emad'}
